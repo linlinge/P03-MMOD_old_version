@@ -1,1 +1,1 @@
-This is the code for MMOD (Simple Version).
+MMOD: Modulization Methods for Outlier Detection on 3D Point Cloud
