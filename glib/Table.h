@@ -17,7 +17,7 @@ class Rrd
 		Rrd(int id,double item1){
 			id_=id;
 			item1_=item1;
-		}		
+		}
 };
 
 class Table
@@ -47,6 +47,10 @@ class Table
 		// Quantile
 		double Quantile(double p);
 		double Median();
+		double Mean();
+		double Std();
+		double Minimum();
+		double Maximum();
 
 		// 
 		void EnableActive();
@@ -61,7 +65,9 @@ class Table
 		void GetBoxplot(double lamda=20.0,int item_index=1);
 		void SortBackup(int item_index=1);		
 		void Print();
-		void KDE();
+		double PDF(double t,double n,double h);
+		double WritePDF();
+		double ReversePDF(double P);
 
 		// Standarize with Z-score method
 		void Standardize_Zscore(int item_index=1);
@@ -88,5 +94,14 @@ class Table
 
 		void nPLOF(pcl::PointCloud<PointType>::Ptr cloud,int K);
 		void SetActiveIndex(string erea_color, string status);
+
+
+
+		// Get 
+		vector<int> GetIndex(string str,double v);
+
+		// Fast Remove 
+		void FastRemove(int index);
+		void FastRemove(vector<int> indices);
 		
 };

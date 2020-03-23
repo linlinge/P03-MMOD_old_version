@@ -44,3 +44,21 @@ double GaussianKernel(double x)
 {
 	return 1.0/sqrt(2.0*M_PI)*exp(-x*x/2.0);
 }
+double Erf(double x)
+{
+	double rst=0;
+	if(x>=0){		
+		double p = 0.3275911;
+		double a1 = 0.254829592;
+		double a2 = -0.284496736;
+		double a3 = 1.421413741;
+		double a4 = -1.453152027;
+		double a5 = 1.061405429;
+		double t=1.0/(1+p*x);
+		rst=1-(a1*t+a2*t*t+a3*pow(t,3)+a4*pow(t,4)+a5*pow(t,5))*exp(-x*x);
+	}
+	else{
+		rst=-1.0*erf(-x);
+	}
+	return rst;
+}

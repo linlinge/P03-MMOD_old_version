@@ -516,7 +516,147 @@ void Table::SetActiveIndex(string erea_color, string status)
      
 }
 
-void Table::KDE()
+double Table::PDF(double t,double n,double h)
 {
-    
+    double rst=0;
+    for(int i=0;i<records_.size();i++){
+        double tmp=sqrt(2)/2.0*(t-records_[i].item1_)/h;
+        rst+=Erf(tmp);
+    }
+    rst=rst/(2.0*n)+1/2.0;
+    return rst;
+}
+
+double Table::Mean()
+{
+    double rst=0;
+    #pragma omp parallel for
+    for(int i=0;i<records_.size();i++) 
+        rst+=records_[i].item1_;
+    rst=rst/records_.size();
+}
+
+double Table::Std()
+{
+    double rst=0;
+    double vmean=Mean();
+    #pragma omp parallel for
+    for(int i=0;i<records_.size();i++) 
+        rst+=pow(records_[i].item1_-vmean,2);
+    return sqrt(rst/(records_.size()-1));
+}
+
+double Table::ReversePDF(double P)
+{
+    // double IQR=Quantile(0.75)-Quantile(0.25);
+    // vector<int> new_indices;
+    // new_indices=GetIndex(">=",Quantile(0.75)+3.0*IQR);
+    // FastRemove(new_indices);
+
+    // update parameters
+    double n=records_.size();
+    double IQR=Quantile(0.75)-Quantile(0.25);
+    double h=0.9*pow(n,-0.2)*min(Std(),IQR/1.34);
+
+    double t0=Minimum();
+    double t1=Mean();
+    double t2=Maximum();
+    double ptmp=PDF(t1,n,h);
+    while(abs(ptmp-P)>0.001){
+        if(ptmp>P)
+            t2=t1;
+        else
+            t0=t1;
+        t1=(t0+t2)/2.0;
+        ptmp=PDF(t1,n,h);
+    }
+    cout<<"t1:"<<t1<<endl;
+    return t1;
+}
+
+double Table::Minimum()
+{
+    double rst=INT_MAX;
+    for(int i=0;i<records_.size();i++)
+        rst=rst<records_[i].item1_ ? rst:records_[i].item1_;
+    return rst;
+}
+
+double Table::Maximum()
+{
+    double rst=-INT_MAX;
+    for(int i=0;i<records_.size();i++)
+        rst=rst>records_[i].item1_ ? rst:records_[i].item1_;
+    return rst;
+}
+
+double Table::WritePDF()
+{
+    double IQR=Quantile(0.75)-Quantile(0.25);
+    vector<int> new_indices;
+    double thresh=Quantile(0.75)+3.0*IQR;
+    new_indices=GetIndex(">=",thresh);
+    FastRemove(new_indices);
+   
+
+    // update parameters
+    double n=records_.size();
+    IQR=Quantile(0.75)-Quantile(0.25);
+    double h=0.9*pow(n,-0.2)*min(Std(),IQR/1.34);
+    double vmin=Minimum();
+    double vmax=Maximum();
+    double step=(vmax-vmin)/55.0;
+    ofstream fout("Result/PDF.csv");
+    double ptmp=0;
+    for(double t=vmin;t<=vmax;t+=step){
+        ptmp=PDF(t,n,h);
+        fout<<ptmp<<endl;
+    }
+    fout.close();
+    cout<<ptmp<<endl;
+}
+
+
+vector<int> Table::GetIndex(string str, double thresh)
+{
+    vector<int> rst;
+    if(str==">"){
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_>thresh)
+                rst.push_back(i);
+        }
+    }
+    else if(str==">="){
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_>=thresh)
+                rst.push_back(i);
+        }
+    }
+    else if(str=="<"){
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_<thresh)
+                rst.push_back(i);
+        }
+    }
+    else if(str=="<="){
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_<=thresh)
+                rst.push_back(i);
+        }
+    }
+    return rst;
+}
+
+void Table::FastRemove(int index)
+{
+    int tail_idx=records_.size()-1;
+    records_[index].id_=records_[tail_idx].id_;
+    records_[index].item1_=records_[tail_idx].item1_;
+    records_.pop_back();
+}
+void Table::FastRemove(vector<int> indices)
+{
+    for(int i=0;i<indices.size();i++){
+        FastRemove(indices[i]);
+    }
 }

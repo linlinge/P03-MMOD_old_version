@@ -52,6 +52,25 @@ void Method02_Slope(pcl::PointCloud<PointType>::Ptr cloud)
 	}
 	pcl::io::savePLYFileBinary("Result/rst_color.ply",*cloud);
 }
+void Method02_Slope_PDF(pcl::PointCloud<PointType>::Ptr cloud)
+{
+	PointSetFeatures psf;
+	psf.ApplykNN(cloud,100,"slope");
+	// psf.rst_slope_.Write("Result/slope.csv");
+	// psf.rst_slope_.WritePDF();
+	double t=psf.rst_slope_.ReversePDF(0.98);
+
+	for(int i=0;i<psf.rst_slope_.records_.size();i++){
+		if(psf.rst_slope_.records_[i].item1_>t){
+			int itmp=psf.rst_slope_.records_[i].id_;
+			cloud->points[itmp].r=255;
+			cloud->points[itmp].g=0;
+			cloud->points[itmp].b=0;
+		}
+	}
+	pcl::io::savePLYFileBinary("Result/slope_pdf.ply",*cloud);
+}
+
 
 void Method03_MinorEigenvalue(pcl::PointCloud<PointType>::Ptr cloud)
 {
@@ -136,8 +155,9 @@ int main(int argc,char** argv)
 		return (-1);
 	}
 
-	Blending01_MinorEigenvalue_Slope(cloud);
+	// Blending01_MinorEigenvalue_Slope(cloud);
 	// Method02_Slope(cloud);
 	// Method03_MinorEigenvalue(cloud);
+	Method02_Slope_PDF(cloud);
 	return 0;
 }
