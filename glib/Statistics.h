@@ -22,3 +22,5 @@ double GaussErrorFunction(double x);
 double LossFunc(double x);
 double GaussianKernel(double x);
 double Erf(double x);
+
+int IQRTest(vector<double> dat);

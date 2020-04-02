@@ -5,6 +5,8 @@
 #include "Color.h"
 #include "Statistics.h"
 #include <numeric>
+#include <VectorExtend.h>
+#include "SignalProcessing.h"
 
 // Normal Angle
 class Feature
@@ -25,7 +27,7 @@ class Feature
 
         // Feature 03: Thin Plane
         int    ThinPlaneCounter(pcl::PointCloud<PointType>::Ptr cloud);
-        double ThinPlaneAngle(pcl::PointCloud<PointType>::Ptr cloud);
+        double ThinPlaneAngle(pcl::PointCloud<PointType>::Ptr cloud,V3& mynormal);
         double ThinPlaneProjector(pcl::PointCloud<PointType>::Ptr cloud);
 };
 
@@ -103,6 +105,6 @@ class PointSetFeatures
         int flag_slope_=0;
         int flag_gap_=0;
         int flag_pulse_=0;
-        Table rst_slope_,rst_gap_max_,rst_gap_var_,rst_pulse_;
+        Table rst_slope_,rst_gap_max_,rst_gap_IQR,rst_gap_var_,rst_pulse_;
         void ApplykNN(pcl::PointCloud<PointType>::Ptr cloud, int K=80,string mode="gap");
 };

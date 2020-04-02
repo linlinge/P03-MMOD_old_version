@@ -6,6 +6,7 @@
 #include <string>
 #include "Statistics.h"
 #include "PCLExtend.h"
+#include "VectorExtend.h"
 #include "Color.h"
 using namespace std;
 class Rrd
@@ -68,6 +69,7 @@ class Table
 		double PDF(double t,double n,double h);
 		double WritePDF();
 		double ReversePDF(double P);
+		void GetSpecifiedIndex(vector<int>& out,string str=">",double thresh1=0, double thresh2=0);
 
 		// Standarize with Z-score method
 		void Standardize_Zscore(int item_index=1);
@@ -83,10 +85,9 @@ class Table
 		// Overturn the table
 		void Overturn();
 		// error
-		double erf(double x);
 		void GetNormalDistributionError();
 		//
-		void LocalFilter(pcl::PointCloud<PointType>::Ptr cloud,int K);
+		void LocalFilter(string str,pcl::PointCloud<PointType>::Ptr cloud,int K);
 		void GetCorrespondingColor(int item_index=1);
 		//
 		void GetHistogram(int k=30);

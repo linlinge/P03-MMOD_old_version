@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/COR",
-            "args": ["/home/llg/dataset/stl004_total.ply"],
+            "args": ["/home/llg/dataset/cat-colmap.ply"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -11,4 +11,6 @@ ADD_LIBRARY(GLIB BasicGeometry.cpp
                  PCLExtend.cpp 
                  Statistics.cpp 
                  Color.cpp 
-                 Table.cpp)
+                 Table.cpp
+                 VectorExtend.cpp
+                 SignalProcessing.cpp)

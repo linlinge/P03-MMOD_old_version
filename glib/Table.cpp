@@ -3,22 +3,18 @@ void Table::Resize(int n)
 {
     records_.resize(n);
 }
-
 int Table::Rows()
 {
     return records_.size();
 }
-
 void Table::EnableActive()
 {
     flag_is_active_=1;
 }
-
 void Table::DisableActive()
 {
     flag_is_active_=0;
 }
-
 void Table::GetMeanAndVariance(int item_index)
 {    
     if(1==item_index){
@@ -56,7 +52,6 @@ void Table::GetMeanAndVariance(int item_index)
             cout<<"Error 01: active mode error!"<<endl;
     }
 }
-
 void Table::GetMinimumAndMaximum(int item_index)
 {
     if(1==item_index){
@@ -81,7 +76,6 @@ void Table::GetMinimumAndMaximum(int item_index)
             cout<<"Error 02: GetMinimumAndMaximum error!"<<endl;
     }    
 }
-
 void Table::Standardize_Zscore(int item_index)
 {
     if(1==item_index){
@@ -103,7 +97,6 @@ void Table::Standardize_Zscore(int item_index)
             cout<<"Error 03: Standardize Zscore error!"<<endl;        
     }
 }
-
 void Table::Normalize_Min_Max(int item_index)
 {
     if(1==item_index){
@@ -123,7 +116,6 @@ void Table::Normalize_Min_Max(int item_index)
             cout<<"Error 04: Normalize min max error!"<<endl;
     }
 }
-
 void Table::Normalize_Tanh(double scale,int item_index)
 {
     if(1==item_index){        
@@ -147,19 +139,16 @@ void Table::Normalize_Tanh(double scale,int item_index)
            cout<<"Error 05: Normalize Tanh error!"<<endl; 
     }
 }
-
 void Table::Ascending(int item_index)
 {
     if(1==item_index)
         sort(records_.begin(),records_.end(),[](Rrd& e1,Rrd& e2){ return e1.item1_<e2.item1_;});
 }
-
 void Table::Descending(int item_index)
 {
     if(1==item_index)
         sort(records_.begin(),records_.end(),[](Rrd& e1, Rrd& e2){ return e1.item1_> e2.item1_;});
 }
-
 void Table::Write(string path)
 {
     ofstream fout(path);
@@ -176,7 +165,6 @@ void Table::Write(string path)
     }
     fout.close();
 }
-
 void Table::MultiplyQ6(int m1,int m2,double scale)
 {
     GetMinimumAndMaximum();
@@ -190,7 +178,6 @@ void Table::MultiplyQ6(int m1,int m2,double scale)
         }
     }
 }
-
 void Table::Overturn()
 {
     GetMinimumAndMaximum();
@@ -199,7 +186,6 @@ void Table::Overturn()
         records_[i].item1_=max_-records_[i].item1_;        
     }
 }
-
 void Table::SetQ6(int m1,int m2)
 {
     GetMinimumAndMaximum();
@@ -213,50 +199,57 @@ void Table::SetQ6(int m1,int m2)
         }
     }
 }
-
-double Table::erf(double x)
-{
-	double a1=0.278393;
-	double a2=0.230389;
-	double a3=0.000972;
-	double a4=0.078108;
-	double m=1+a1*x+a2*pow(x,2)+a3*pow(x,3)+a4*pow(x,4);
-	return (1-1.0/pow(m,4));
-}
-
 void Table::GetNormalDistributionError()
 {
     #pragma omp parallel for
     for(int i=0;i<records_.size();i++){
-        records_[i].item1_=erf(records_[i].item1_);
+        records_[i].item1_=Erf(records_[i].item1_);
     }
 }
-
-void Table::LocalFilter(pcl::PointCloud<PointType>::Ptr cloud,int K)
+void Table::LocalFilter(string str, pcl::PointCloud<PointType>::Ptr cloud,int K)
 {
     vector<double> lf;
     lf.resize(cloud->points.size());
     pcl::search::KdTree<PointType>::Ptr kdtree(new pcl::search::KdTree<PointType>());
     kdtree->setInputCloud(cloud);
 
-    // #pragma omp parallel for
-    for(int i=0;i<cloud->points.size();i++){
-        vector<int> idx(K+1);
-        vector<float> dist(K+1);        
-        kdtree->nearestKSearch(cloud->points[i], K+1, idx, dist);
-        double sum=0;
-        for(int j=1;j<K+1;j++){
-            sum+=records_[idx[j]].item1_;
+    if("average"==str){
+         // #pragma omp parallel for
+        for(int i=0;i<cloud->points.size();i++){
+            vector<int> idx(K+1);
+            vector<float> dist(K+1);        
+            kdtree->nearestKSearch(cloud->points[i], K+1, idx, dist);
+            double sum=0;
+            for(int j=1;j<K+1;j++){
+                sum+=records_[idx[j]].item1_;
+            }
+            sum/=K;
+            lf[i]=records_[i].item1_/sum-1.0f;
         }
-        sum/=K;
-        lf[i]=records_[i].item1_/sum-1.0f;
-    }
 
-    for(int i=0;i<cloud->points.size();i++){
-        records_[i].item1_=lf[i];
+        for(int i=0;i<cloud->points.size();i++){
+            records_[i].item1_=lf[i];
+        }
     }
+    else if("std"==str){
+        for(int i=0;i<cloud->points.size();i++){
+            vector<int> idx(K+1);
+            vector<float> dist(K+1);        
+            kdtree->nearestKSearch(cloud->points[i], K+1, idx, dist);
+            vector<double> tmp;
+            for(int j=1;j<K+1;j++){
+                tmp.push_back(abs(records_[i].item1_-records_[idx[j]].item1_));
+            }
+            lf[i]=VectorSum(tmp);
+            // lf[i]=VectorStd(tmp);
+        }
+
+        for(int i=0;i<cloud->points.size();i++){
+            records_[i].item1_=lf[i];
+        }
+    }
+   
 }
-
 void Table::GetHistogram(int k)
 {
     records_hist_.resize(k);
@@ -279,7 +272,6 @@ void Table::GaussianOutlier(int k)
         }
     }
 }
-
 double Table::Quantile(double p)
 {   
     SortBackup(1);
@@ -289,7 +281,6 @@ double Table::Quantile(double p)
     double Q=records_sorted_[Q_idx_integer-1].item1_+(records_sorted_[Q_idx_integer].item1_-records_sorted_[Q_idx_integer-1].item1_)*Q_idx_decimal;    
     return Q;
 }
-
 double Table::Median()
 {
     SortBackup(1);
@@ -303,7 +294,6 @@ double Table::Median()
     median_=median;
     return median;
 }
-
 void Table::SortBackup(int item_index)
 {
     // Step 1: Does it have backup ?
@@ -323,7 +313,6 @@ void Table::SortBackup(int item_index)
         sort(records_sorted_.begin(),records_sorted_.end(),[](Rrd& e1, Rrd& e2){ return e1.id_<e2.id_;});
     }
 }
-
 void Table::GetBoxplot(double lamda, int item_index)
 {
     if(item_index==1){
@@ -380,12 +369,10 @@ void Table::GetBoxplot(double lamda, int item_index)
         }
     }
 }
-
 void Table::push_back(Rrd e)
 {
     records_.push_back(e);
 }
-
 void Table::Print()
 {
     for(int i=0;i<records_.size();i++){
@@ -393,7 +380,6 @@ void Table::Print()
     }
     cout<<endl;
 }
-
 void Table::GetCorrespondingColor(int item_index)
 {
     if(item_index==1){
@@ -449,7 +435,6 @@ void Table::GetCorrespondingColor(int item_index)
         }
     }
 }
-
 void Table::nPLOF(pcl::PointCloud<PointType>::Ptr cloud,int K)
 {
     pcl::search::KdTree<PointType>::Ptr kdtree(new pcl::search::KdTree<PointType>());
@@ -473,7 +458,6 @@ void Table::nPLOF(pcl::PointCloud<PointType>::Ptr cloud,int K)
         records_[i].item1_=plof[i];
     }
 }
-
 // blue -> green -> yellow -> red
 void Table::SetActiveIndex(string erea_color, string status)
 {
@@ -515,7 +499,6 @@ void Table::SetActiveIndex(string erea_color, string status)
     }
      
 }
-
 double Table::PDF(double t,double n,double h)
 {
     double rst=0;
@@ -526,7 +509,6 @@ double Table::PDF(double t,double n,double h)
     rst=rst/(2.0*n)+1/2.0;
     return rst;
 }
-
 double Table::Mean()
 {
     double rst=0;
@@ -535,7 +517,6 @@ double Table::Mean()
         rst+=records_[i].item1_;
     rst=rst/records_.size();
 }
-
 double Table::Std()
 {
     double rst=0;
@@ -545,7 +526,6 @@ double Table::Std()
         rst+=pow(records_[i].item1_-vmean,2);
     return sqrt(rst/(records_.size()-1));
 }
-
 double Table::ReversePDF(double P)
 {
     // double IQR=Quantile(0.75)-Quantile(0.25);
@@ -570,10 +550,43 @@ double Table::ReversePDF(double P)
         t1=(t0+t2)/2.0;
         ptmp=PDF(t1,n,h);
     }
-    cout<<"t1:"<<t1<<endl;
     return t1;
 }
-
+void Table::GetSpecifiedIndex(vector<int>& out, string str,double thresh1, double thresh2)
+{
+    if(">"==str){
+       double t1=ReversePDF(thresh1);
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_>t1)
+                out.push_back(records_[i].id_);
+        }
+    }
+    else if("<"==str){
+        double t1=ReversePDF(thresh1);
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_<t1)
+                out.push_back(records_[i].id_);
+        }
+    }
+    else if("t1<x<t2"==str){
+        double t1=ReversePDF(thresh1);
+        double t2=ReversePDF(thresh2);
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_>t1 && records_[i].item1_<t2){
+                out.push_back(records_[i].id_);
+            }
+        }
+    }
+    else if("x<t1 || x>t2"==str){
+        double t1=ReversePDF(thresh1);
+        double t2=ReversePDF(thresh2);
+        for(int i=0;i<records_.size();i++){
+            if(records_[i].item1_<t1 || records_[i].item1_>t2){
+                out.push_back(records_[i].id_);
+            }
+        }
+    }
+}
 double Table::Minimum()
 {
     double rst=INT_MAX;
@@ -581,7 +594,6 @@ double Table::Minimum()
         rst=rst<records_[i].item1_ ? rst:records_[i].item1_;
     return rst;
 }
-
 double Table::Maximum()
 {
     double rst=-INT_MAX;
@@ -589,7 +601,6 @@ double Table::Maximum()
         rst=rst>records_[i].item1_ ? rst:records_[i].item1_;
     return rst;
 }
-
 double Table::WritePDF()
 {
     double IQR=Quantile(0.75)-Quantile(0.25);
@@ -615,8 +626,6 @@ double Table::WritePDF()
     fout.close();
     cout<<ptmp<<endl;
 }
-
-
 vector<int> Table::GetIndex(string str, double thresh)
 {
     vector<int> rst;
@@ -646,7 +655,6 @@ vector<int> Table::GetIndex(string str, double thresh)
     }
     return rst;
 }
-
 void Table::FastRemove(int index)
 {
     int tail_idx=records_.size()-1;

@@ -62,3 +62,8 @@ double Erf(double x)
 	}
 	return rst;
 }
+
+int IQRTest(vector<double> dat)
+{
+	
+}
